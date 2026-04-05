@@ -1,0 +1,44 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Update Status{% endblock %}
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+        <a href="{% url 'dashboard' %}" style="color: #64748b; text-decoration: none; font-size: 0.875rem;">&#8592; Back</a>
+        <h1 style="font-size: 1.3rem; font-weight: 600;">Update — {{ application.company.name }}</h1>
+    </div>
+    <div class="card">
+        <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.25rem;">
+            Role: <strong>{{ application.role }}</strong> &nbsp;|&nbsp; Current status: <span class="badge badge-{{ application.status }}">{{ application.get_status_display }}</span>
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>New Status</label>
+                <select name="status">
+                    <option value="applied" {% if application.status == 'applied' %}selected{% endif %}>Applied</option>
+                    <option value="oa" {% if application.status == 'oa' %}selected{% endif %}>OA Received</option>
+                    <option value="interview" {% if application.status == 'interview' %}selected{% endif %}>Interview Scheduled</option>
+                    <option value="offered" {% if application.status == 'offered' %}selected{% endif %}>Offered</option>
+                    <option value="rejected" {% if application.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Follow-up Date</label>
+                <input type="date" name="follow_up_date" value="{{ application.follow_up_date|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea name="notes" rows="3">{{ application.notes }}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Change Note (what happened?)</label>
+                <input type="text" name="note" placeholder="e.g. Got OA invite on email, interview scheduled for Monday">
+            </div>
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

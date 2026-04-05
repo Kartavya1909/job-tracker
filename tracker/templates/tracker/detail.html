@@ -1,0 +1,63 @@
+{% extends 'tracker/base.html' %}
+{% block title %}{{ application.company.name }}{% endblock %}
+{% block content %}
+<div style="max-width: 700px; margin: 0 auto;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+        <a href="{% url 'dashboard' %}" style="color: #64748b; text-decoration: none; font-size: 0.875rem;">&#8592; Back</a>
+        <h1 style="font-size: 1.3rem; font-weight: 600;">{{ application.company.name }}</h1>
+        <span class="badge badge-{{ application.status }}">{{ application.get_status_display }}</span>
+    </div>
+
+    <div class="card" style="margin-bottom: 1rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <p style="font-size: 0.8rem; color: #64748b;">Role</p>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ application.role }}</p>
+            </div>
+            <div>
+                <p style="font-size: 0.8rem; color: #64748b;">Date Applied</p>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ application.date_applied }}</p>
+            </div>
+            <div>
+                <p style="font-size: 0.8rem; color: #64748b;">Follow-up Date</p>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ application.follow_up_date|default:"Not set" }}</p>
+            </div>
+            <div>
+                <p style="font-size: 0.8rem; color: #64748b;">Last Updated</p>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ application.updated_at|date:"d M Y" }}</p>
+            </div>
+        </div>
+        {% if application.notes %}
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
+            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.3rem;">Notes</p>
+            <p style="font-size: 0.9rem; color: #334155;">{{ application.notes }}</p>
+        </div>
+        {% endif %}
+        <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+            <a href="{% url 'update_status' application.pk %}" class="btn btn-primary">Update Status</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <p style="font-weight: 600; font-size: 0.95rem; margin-bottom: 1rem;">Status History</p>
+        {% if history %}
+        {% for h in history %}
+        <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: #1a1a2e; margin-top: 0.35rem; flex-shrink: 0;"></div>
+            <div>
+                <p style="font-size: 0.875rem;">
+                    <span class="badge badge-{{ h.old_status }}" style="font-size: 0.72rem;">{{ h.old_status }}</span>
+                    &nbsp;&#8594;&nbsp;
+                    <span class="badge badge-{{ h.new_status }}" style="font-size: 0.72rem;">{{ h.new_status }}</span>
+                </p>
+                {% if h.note %}<p style="font-size: 0.82rem; color: #64748b; margin-top: 0.3rem;">{{ h.note }}</p>{% endif %}
+                <p style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.2rem;">{{ h.changed_at|date:"d M Y, H:i" }}</p>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="font-size: 0.875rem; color: #94a3b8;">No status changes recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
