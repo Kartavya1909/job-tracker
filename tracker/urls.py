@@ -11,4 +11,7 @@ urlpatterns = [
     path('update/<int:pk>/', views.update_status, name='update_status'),
     path('delete/<int:pk>/', views.delete_application, name='delete_application'),
     path('detail/<int:pk>/', views.application_detail, name='application_detail'),
+    path('gmail/connect/', views.gmail_connect, name='gmail_connect'),
+    path('gmail/callback/', views.gmail_callback, name='gmail_callback'),
+    path('gmail/sync/', views.gmail_sync_view, name='gmail_sync_view'),
 ]

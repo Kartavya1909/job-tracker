@@ -26,6 +26,23 @@
                 <p style="font-size: 0.8rem; color: #64748b;">Last Updated</p>
                 <p style="font-weight: 500; margin-top: 0.2rem;">{{ application.updated_at|date:"d M Y" }}</p>
             </div>
+            {% if application.ctc %}
+            <div>
+                <p style="font-size: 0.8rem; color: #64748b;">CTC / Stipend</p>
+                <p style="font-weight: 500; margin-top: 0.2rem;">{{ application.ctc }}</p>
+            </div>
+            {% endif %}
+
+            {% if application.gmail_message_id %}
+            <div>
+                <p style="font-size: 0.8rem; color: #64748b;">Original Email</p>
+                <a href="https://mail.google.com/mail/u/0/#inbox/{{ application.gmail_message_id }}"
+                target="_blank"
+                style="color: #1a1a2e; font-weight: 500; font-size: 0.9rem;">
+                    Open in Gmail ↗
+                </a>
+            </div>
+            {% endif %}
         </div>
         {% if application.notes %}
         <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #f1f5f9;">

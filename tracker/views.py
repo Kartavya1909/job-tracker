@@ -5,6 +5,11 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib import messages
 from .models import Application, Company, StatusHistory
 from datetime import date
+import os
+import json
+from django.conf import settings
+from .gmail_auth import get_auth_url, exchange_code_for_token, credentials_to_dict
+from .gmail_sync import sync_gmail
 
 def login_view(request):
     if request.method == 'POST':
@@ -100,3 +105,48 @@ def application_detail(request, pk):
     application = get_object_or_404(Application, pk=pk, user=request.user)
     history = application.history.order_by('-changed_at')
     return render(request, 'tracker/detail.html', {'application': application, 'history': history})
+
+@login_required
+def gmail_connect(request):
+    import secrets
+    state = secrets.token_urlsafe(16)
+    request.session['gmail_state'] = state
+    request.session.modified = True
+    redirect_uri = request.build_absolute_uri('/gmail/callback/')
+    auth_url = get_auth_url(redirect_uri, state)
+    return redirect(auth_url)
+
+@login_required
+def gmail_callback(request):
+    if 'error' in request.GET:
+        messages.error(request, 'Gmail access was denied.')
+        return redirect('dashboard')
+
+    code = request.GET.get('code')
+    if not code:
+        messages.error(request, 'No code received from Google.')
+        return redirect('dashboard')
+
+    redirect_uri = request.build_absolute_uri('/gmail/callback/')
+
+    try:
+        token_data = exchange_code_for_token(code, redirect_uri)
+        if 'error' in token_data:
+            messages.error(request, f'Token error: {token_data["error"]}')
+            return redirect('dashboard')
+        creds_dict = credentials_to_dict(token_data, redirect_uri)
+        request.session['gmail_credentials'] = creds_dict
+        request.session.modified = True
+        return redirect('gmail_sync_view')
+    except Exception as e:
+        messages.error(request, f'Gmail auth failed: {str(e)}')
+        return redirect('dashboard')
+        
+@login_required
+def gmail_sync_view(request):
+    credentials_dict = request.session.get('gmail_credentials')
+    if not credentials_dict:
+        return redirect('gmail_connect')
+    synced = sync_gmail(request.user, credentials_dict)
+    messages.success(request, f'Gmail synced successfully. {synced} applications updated.')
+    return redirect('dashboard')
