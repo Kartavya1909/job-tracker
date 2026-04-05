@@ -5,6 +5,8 @@
   },
   "deploy": {
     "startCommand": "gunicorn core.wsgi --log-file -",
-    "restartPolicyType": "ON_FAILURE"
+    "restartPolicyType": "ON_FAILURE",
+    "healthcheckPath": "/",
+    "preDeployCommand": "python manage.py migrate"
   }
 }
