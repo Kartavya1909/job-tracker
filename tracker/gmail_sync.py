@@ -5,8 +5,18 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from .models import Application, Company, StatusHistory
 import datetime
+import dateparser
+from .ml.predict import predict_email_data
 
 JOB_KEYWORDS = {
+    'form_submission': [
+        'registration link',
+        'apply here',
+        'submit the form',
+        'fill the form',
+        'google form',
+        'form deadline',
+    ],
     'applied': [
         'application received', 'thank you for applying',
         'we received your application', 'successfully applied',
@@ -69,14 +79,31 @@ def is_job_related_content(subject, body):
     return False
 
 def classify_email(subject, body):
+
     text = (subject + ' ' + body).lower()
-    for keyword in JOB_KEYWORDS['rejected']:
-        if keyword in text:
-            return 'rejected'
-    for status in ['offered', 'interview', 'oa', 'applied']:
-        for keyword in JOB_KEYWORDS[status]:
-            if keyword in text:
-                return status
+
+    score = {
+        'rejected': 0,
+        'offered': 0,
+        'interview': 0,
+        'oa': 0,
+        'applied': 0,
+    }
+
+    for status, keywords in JOB_KEYWORDS.items():
+
+        for word in keywords:
+
+            if word in text:
+
+                score[status] += 1
+
+    best_match = max(score, key=score.get)
+
+    if score[best_match] > 0:
+
+        return best_match
+
     return None
 
 def extract_ctc(body):
@@ -103,6 +130,12 @@ def extract_company_from_email(sender):
         company_name = parts[-2].capitalize()
     else:
         company_name = parts[0].capitalize()
+        KNOWN_COMPANIES = {
+            'tcs.com': 'TCS',
+            'infosys.com': 'Infosys',
+            'wipro.com': 'Wipro',
+            'accenture.com': 'Accenture',
+        }
     return company_name
 
 def get_email_body(payload):
@@ -163,7 +196,7 @@ def sync_gmail(user, credentials_dict):
             if not ('placement' in sender.lower() or 'soa' in sender.lower()):
                 continue
 
-        status = classify_email(subject, body)
+        status, role, company_name = predict_email_data(subject, body, sender)
 
         if not status:
             if 'placement' in sender.lower() or 'soa' in sender.lower():
@@ -172,15 +205,17 @@ def sync_gmail(user, credentials_dict):
         if not status:
             continue
 
-        company_name = extract_company_from_email(sender)
+       #company_name = extract_company_from_email(sender)
         if not company_name:
             continue
 
         ctc = extract_ctc(body)
+        deadline = extract_deadline(body)
         gmail_link = f'https://mail.google.com/mail/u/0/#inbox/{message_id}'
 
         company, _ = Company.objects.get_or_create(name=company_name)
-
+        
+        
         existing = Application.objects.filter(
             user=user,
             company=company
@@ -195,6 +230,9 @@ def sync_gmail(user, credentials_dict):
                     note=f'Auto-updated from Gmail: {subject[:100]}'
                 )
                 existing.status = status
+            
+            if deadline and not existing.deadline:
+                existing.deadline = deadline
             if ctc and not existing.ctc:
                 existing.ctc = ctc
             if not existing.gmail_message_id:
@@ -204,14 +242,41 @@ def sync_gmail(user, credentials_dict):
             Application.objects.create(
                 user=user,
                 company=company,
-                role='(detected from Gmail)',
+                role=role,
                 status=status,
                 date_applied=datetime.date.today(),
                 notes=f'Auto-created from Gmail. Subject: {subject[:200]}',
                 ctc=ctc,
-                gmail_message_id=message_id
+                gmail_message_id=message_id,
+                deadline=deadline
             )
 
         synced += 1
 
     return synced
+
+def extract_deadline(text):
+
+    patterns = [
+        r'apply by ([^.,;\n]+)',
+        r'deadline[: ]+([^.,;\n]+)',
+        r'last date[: ]+([^.,;\n]+)',
+        r'complete by ([^.,;\n]+)',
+        r'before ([^.,;\n]+)',
+    ]
+
+    for pattern in patterns:
+
+        match = re.search(pattern, text.lower())
+
+        if match:
+
+            parsed_date = dateparser.parse(match.group(1))
+
+            if parsed_date:
+
+                return parsed_date.date()
+
+    return None
+
+    role

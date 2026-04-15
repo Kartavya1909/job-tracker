@@ -61,6 +61,7 @@
                 <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: #475569;">Status</th>
                 <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: #475569;">Applied</th>
                 <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: #475569;">Follow Up</th>
+                <th style="padding: 0.75rem 1rem; text-align: left; font-weight: 600; color: #475569;">Deadline
                 <th style="padding: 0.75rem 1.5rem; text-align: right; font-weight: 600; color: #475569;">Actions</th>
             </tr>
         </thead>
@@ -82,6 +83,7 @@
                     <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.8rem;">Delete</button>
                 </form>
             </td>
+            <td>{{ app.deadline|default:"—" }}</td>
         </tr>
         {% endfor %}
         </tbody>

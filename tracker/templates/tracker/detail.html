@@ -23,6 +23,12 @@
                 <p style="font-weight: 500; margin-top: 0.2rem;">{{ application.follow_up_date|default:"Not set" }}</p>
             </div>
             <div>
+                <p style="font-size: 0.8rem; color: #64748b;">Deadline</p>
+                <p style="font-weight: 500; margin-top: 0.2rem;">
+                {{ application.deadline|default:"Not found" }}
+                </p>
+            </div>
+            <div>
                 <p style="font-size: 0.8rem; color: #64748b;">Last Updated</p>
                 <p style="font-weight: 500; margin-top: 0.2rem;">{{ application.updated_at|date:"d M Y" }}</p>
             </div>
